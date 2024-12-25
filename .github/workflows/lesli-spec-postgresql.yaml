@@ -36,21 +36,38 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli specs workflow Brakeman"
+name: "Lesli specs workflow PostgreSQL"
 on:
-  workflow_call: # This allows the workflow to be reusable
+  workflow_dispatch:    # This allows the action to be executed on demand
+  workflow_call:        # This allows the workflow to be reusable
     inputs:
       branch:
         required: true
         type: string
 
 jobs:
-  brakeman-scan:
-    name: Test workflow for Lesli Core (Brakeman)
+  postgres-test:
+    name: Test workflow for Lesli Core (PostgreSQL)
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
     if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
+
+    # Start database service necessary to execute the RSpec tests
+    services:
+      postgres:
+        image: postgres:11.5
+        env:
+          POSTGRES_DB: "lesli-test"
+          POSTGRES_USER: "lesli-test"
+          POSTGRES_PASSWORD: "lesli-test"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
 
@@ -81,6 +98,7 @@ jobs:
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
           cp ./engines/Lesli/.github/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./engines/Lesli/.github/rails/database_postgresql.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -89,8 +107,15 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-      # Run Brakeman
-      - name: Run Brakeman Security Scanner
-        run: |
-          bundle exec brakeman 
-          continue-on-error: true
+      # Build the Lesli database
+      - name: Set up PostgreSQL database 
+        run: RAILS_ENV=test bundle exec rake lesli:db:reset
+        env:
+          RAILS_ENV: test
+
+      # Run Rspec tests & collect coverage
+      - name: Run Rails tests & collect coverage
+        run: bundle exec rspec engines/${{ github.event.repository.name }}/spec --format documentation --format RspecJunitFormatter --out junit.xml
+        env:
+          CODECOV: true
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

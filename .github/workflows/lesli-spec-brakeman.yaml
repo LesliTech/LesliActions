@@ -1,5 +1,4 @@
 # Lesli
-#
 # Copyright (c) 2023, Lesli Technologies, S. A.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -37,17 +36,18 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli specs workflow SQLite"
+name: "Lesli specs workflow Brakeman"
 on:
-  workflow_call: # This allows the workflow to be reusable
+  workflow_dispatch:    # This allows the action to be executed on demand
+  workflow_call:        # This allows the workflow to be reusable
     inputs:
       branch:
         required: true
         type: string
 
 jobs:
-  sqlite-test:
-    name: Test workflow for Lesli Core (SQLite)
+  brakeman-scan:
+    name: Test workflow for Lesli Core (Brakeman)
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
@@ -70,7 +70,7 @@ jobs:
           repository: LesliTech/Lesli
 
       # Clone engine repository
-      - name: Checkout engine code
+      - name: Checkout engine scode
         uses: actions/checkout@v4
         with:
           path: ./engines/${{ github.event.repository.name }}
@@ -82,7 +82,6 @@ jobs:
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
           cp ./engines/Lesli/.github/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./engines/Lesli/.github/rails/database_sqlite.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -91,14 +90,7 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-      # Build the Lesli database
-      - name: Set up SQLite database
-        run: RAILS_ENV=test bundle exec rake lesli:db:reset
-        env:
-          RAILS_ENV: test
-
-      # Run Rspec tests & collect coverage
-      - name: Run Rails tests with SQLite
-        run: bundle exec rspec spec --pattern ./engines/${{ github.event.repository.name }}/spec/**/**/*_spec.rb --format documentation  
-        env:
-          COVERAGE: true
+      # Run Brakeman
+      - name: Run Brakeman Security Scanner
+        run: |
+          bundle exec brakeman --color -o /dev/stdout

@@ -1,4 +1,5 @@
 # Lesli
+#
 # Copyright (c) 2023, Lesli Technologies, S. A.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -36,37 +37,22 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli specs workflow PostgreSQL"
+name: "Lesli specs workflow SQLite"
 on:
-  workflow_call: # This allows the workflow to be reusable
+  workflow_dispatch:    # This allows the action to be executed on demand
+  workflow_call:        # This allows the workflow to be reusable
     inputs:
       branch:
         required: true
         type: string
 
 jobs:
-  postgres-test:
-    name: Test workflow for Lesli Core (PostgreSQL)
+  sqlite-test:
+    name: Test workflow for Lesli Core (SQLite)
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
     if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
-
-    # Start database service necessary to execute the RSpec tests
-    services:
-      postgres:
-        image: postgres:11.5
-        env:
-          POSTGRES_DB: "lesli-test"
-          POSTGRES_USER: "lesli-test"
-          POSTGRES_PASSWORD: "lesli-test"
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
 
@@ -77,6 +63,13 @@ jobs:
           repository: LesliTech/LesliBuilder
 
       # Clone core repository
+      - name: Checkout LesliActions code
+        uses: actions/checkout@v4
+        with:
+          path: ./engines/LesliActions
+          repository: LesliTech/LesliActions
+
+      # Clone core repository
       - name: Checkout Lesli code
         uses: actions/checkout@v4
         if: "${{github.event.repository.name}} != 'Lesli'"
@@ -85,7 +78,7 @@ jobs:
           repository: LesliTech/Lesli
 
       # Clone engine repository
-      - name: Checkout engine scode
+      - name: Checkout engine code
         uses: actions/checkout@v4
         with:
           path: ./engines/${{ github.event.repository.name }}
@@ -96,8 +89,8 @@ jobs:
         run: |
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
-          cp ./engines/Lesli/.github/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./engines/Lesli/.github/rails/database_postgresql.yml ./config/database.yml
+          cp ./engines/LesliActions/.github/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./engines/LesliActions/.github/rails/database_sqlite.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -107,14 +100,18 @@ jobs:
           bundler-cache: true
 
       # Build the Lesli database
-      - name: Set up PostgreSQL database 
+      - name: Set up SQLite database
         run: RAILS_ENV=test bundle exec rake lesli:db:reset
         env:
           RAILS_ENV: test
 
       # Run Rspec tests & collect coverage
-      - name: Run Rails tests & collect coverage
-        run: bundle exec rspec spec --pattern ./engines/${{ github.event.repository.name }}/spec/**/**/*_spec.rb --format documentation 
+      - name: Run Rails tests with SQLite
+        run: bundle exec rspec --format documentation --format RspecJunitFormatter --out junit.xml
         env:
-          CODECOV: true
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          COVERAGE: true
+
+      - name: Upload test results to Codecov
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
