@@ -71,7 +71,7 @@ jobs:
       # Clone core repository
       - name: Checkout Lesli code
         uses: actions/checkout@v4
-        if: "${{github.event.repository.name}} != 'Lesli'"
+        if: github.event.repository.name != 'Lesli'
         with:
           path: ./engines/Lesli
           repository: LesliTech/Lesli
@@ -79,7 +79,7 @@ jobs:
       # Clone engine repository
       - name: Checkout engine code
         uses: actions/checkout@v4
-        if: "${{github.event.repository.name}} != 'LesliActions'"
+        if: github.event.repository.name != 'LesliActions'
         with:
           path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}

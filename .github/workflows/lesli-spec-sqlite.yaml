@@ -72,7 +72,7 @@ jobs:
       # Clone Lesli core repository
       - name: Checkout Lesli repository
         uses: actions/checkout@v4
-        if: "${{github.event.repository.name}} != 'Lesli'"
+        if: github.event.repository.name != 'Lesli'
         with:
           path: ./engines/Lesli
           repository: LesliTech/Lesli
