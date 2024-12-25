@@ -66,7 +66,7 @@ jobs:
       - name: Checkout LesliActions code
         uses: actions/checkout@v4
         with:
-          path: ./engines/LesliActions
+          path: ./enginesdev/LesliActions
           repository: LesliTech/LesliActions
 
       # Clone core repository
@@ -89,8 +89,8 @@ jobs:
         run: |
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
-          cp ./engines/LesliActions/.github/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./engines/LesliActions/.github/rails/database_sqlite.yml ./config/database.yml
+          cp ./enginesdev/LesliActions/source/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./enginesdev/LesliActions/source/rails/database_sqlite.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
