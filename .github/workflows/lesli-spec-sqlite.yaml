@@ -62,15 +62,15 @@ jobs:
         with:
           repository: LesliTech/LesliBuilder
 
-      # Clone core repository
-      - name: Checkout LesliActions code
+      # Clone LesliActions repository
+      - name: Checkout LesliActions repository
         uses: actions/checkout@v4
         with:
           path: ./enginesdev/LesliActions
           repository: LesliTech/LesliActions
 
-      # Clone core repository
-      - name: Checkout Lesli code
+      # Clone Lesli core repository
+      - name: Checkout Lesli repository
         uses: actions/checkout@v4
         if: "${{github.event.repository.name}} != 'Lesli'"
         with:
@@ -78,9 +78,9 @@ jobs:
           repository: LesliTech/Lesli
 
       # Clone engine repository
-      - name: Checkout engine code
+      - name: Checkout engine repository
         uses: actions/checkout@v4
-        if: "${{github.event.repository.name}} != 'LesliActions'"
+        if: ${{github.event.repository.name}} != 'LesliActions'
         with:
           path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}

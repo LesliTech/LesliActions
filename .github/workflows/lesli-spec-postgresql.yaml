@@ -78,6 +78,13 @@ jobs:
           repository: LesliTech/LesliBuilder
 
       # Clone core repository
+      - name: Checkout LesliActions code
+        uses: actions/checkout@v4
+        with:
+          path: ./enginesdev/LesliActions
+          repository: LesliTech/LesliActions
+
+      # Clone core repository
       - name: Checkout Lesli code
         uses: actions/checkout@v4
         if: "${{github.event.repository.name}} != 'Lesli'"
@@ -86,8 +93,9 @@ jobs:
           repository: LesliTech/Lesli
 
       # Clone engine repository
-      - name: Checkout engine scode
+      - name: Checkout engine code
         uses: actions/checkout@v4
+        if: "${{github.event.repository.name}} != 'LesliActions'"
         with:
           path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
@@ -97,8 +105,8 @@ jobs:
         run: |
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
-          cp ./engines/Lesli/.github/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./engines/Lesli/.github/rails/database_postgresql.yml ./config/database.yml
+          cp ./engines/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./engines/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -115,7 +123,7 @@ jobs:
 
       # Run Rspec tests & collect coverage
       - name: Run Rails tests & collect coverage
-        run: bundle exec rspec engines/${{ github.event.repository.name }}/spec --format documentation --format RspecJunitFormatter --out junit.xml
+        run: bundle exec rspec --format documentation --format RspecJunitFormatter --out junit.xml
         env:
           CODECOV: true
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
