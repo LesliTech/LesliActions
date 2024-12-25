@@ -80,7 +80,7 @@ jobs:
       # Clone engine repository
       - name: Checkout engine repository
         uses: actions/checkout@v4
-        if: ${{github.event.repository.name}} != 'LesliActions'
+        if: github.event.repository.name != 'LesliActions'
         with:
           path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
