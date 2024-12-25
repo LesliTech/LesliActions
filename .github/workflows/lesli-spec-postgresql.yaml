@@ -105,8 +105,8 @@ jobs:
         run: |
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
-          cp ./engines/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./engines/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
+          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems

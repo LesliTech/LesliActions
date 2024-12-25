@@ -89,7 +89,7 @@ jobs:
         run: |
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
-          cp ./engines/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
