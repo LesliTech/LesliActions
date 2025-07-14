@@ -122,8 +122,5 @@ jobs:
           RAILS_ENV: test
 
       # Run Rspec tests & collect coverage
-      - name: Run Rails tests & collect coverage
+      - name: Run Rails tests 
         run: bundle exec rspec --format documentation --format RspecJunitFormatter --out junit.xml
-        env:
-          CODECOV: true
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
