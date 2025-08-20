@@ -62,15 +62,7 @@ jobs:
         uses: actions/checkout@v4
         if: github.event.repository.name != 'LesliActions'
         with:
-          path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
-
-      # Clone LesliActions repository
-      - name: Checkout LesliActions repository
-        uses: actions/checkout@v4
-        with:
-          path: ./enginesdev/LesliActions
-          repository: LesliTech/LesliActions
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
