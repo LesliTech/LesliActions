@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli SQLite Test Workflow"
+name: "Lesli Engine Test Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -48,35 +48,14 @@ on:
         type: string
 
 jobs:
-  sqlite-test:
-    name: SQLite test workflow
+  engine-test:
+    name: Engine test workflow
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
     if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
 
     steps:
-
-      # Clone LesliBuilder repository
-      - name: Checkout LesliBuilder repository
-        uses: actions/checkout@v4
-        with:
-          repository: LesliTech/LesliBuilder
-
-      # Clone LesliActions repository
-      - name: Checkout LesliActions repository
-        uses: actions/checkout@v4
-        with:
-          path: ./enginesdev/LesliActions
-          repository: LesliTech/LesliActions
-
-      # Clone Lesli core repository
-      - name: Checkout Lesli repository
-        uses: actions/checkout@v4
-        if: github.event.repository.name != 'Lesli'
-        with:
-          path: ./engines/Lesli
-          repository: LesliTech/Lesli
 
       # Clone engine repository
       - name: Checkout engine repository
@@ -86,13 +65,12 @@ jobs:
           path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
 
-      # Prepare configuration files
-      - name: Copy configuration files
-        run: |
-          rm ./Gemfile.lock
-          rm ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/database_sqlite.yml ./config/database.yml
+      # Clone LesliActions repository
+      - name: Checkout LesliActions repository
+        uses: actions/checkout@v4
+        with:
+          path: ./enginesdev/LesliActions
+          repository: LesliTech/LesliActions
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -101,19 +79,6 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-      # Build the Lesli database
-      - name: Set up SQLite database
-        run: RAILS_ENV=test bundle exec rake lesli:db:reset
-        env:
-          RAILS_ENV: test
-
       # Run Rspec tests & collect coverage
-      - name: Run Rails tests with SQLite
-        run: bundle exec rspec --format documentation --format RspecJunitFormatter --out junit.xml
-        env:
-          COVERAGE: true
-
-      - name: Upload test results to Codecov
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Run Engine Tests
+        run: bin/rails test
