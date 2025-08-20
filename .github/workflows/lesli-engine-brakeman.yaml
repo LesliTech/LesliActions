@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli specs workflow Brakeman"
+name: "Lesli Engine Brakeman Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -49,7 +49,7 @@ on:
 
 jobs:
   brakeman-scan:
-    name: Test workflow for Lesli Core (Brakeman)
+    name: "Engine brakeman workflow"
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
@@ -57,41 +57,12 @@ jobs:
 
     steps:
 
-      # Clone LesliBuilder repository
-      - name: Checkout LesliBuilder repository
-        uses: actions/checkout@v4
-        with:
-          repository: LesliTech/LesliBuilder
-
-      # Clone core repository
-      - name: Checkout LesliActions code
-        uses: actions/checkout@v4
-        with:
-          path: ./enginesdev/LesliActions
-          repository: LesliTech/LesliActions
-
-      # Clone core repository
-      - name: Checkout Lesli code
-        uses: actions/checkout@v4
-        if: github.event.repository.name != 'Lesli'
-        with:
-          path: ./engines/Lesli
-          repository: LesliTech/Lesli
-
       # Clone engine repository
-      - name: Checkout engine code
+      - name: Checkout engine repository
         uses: actions/checkout@v4
         if: github.event.repository.name != 'LesliActions'
         with:
-          path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
-
-      # Prepare configuration files
-      - name: Copy configuration files
-        run: |
-          rm ./Gemfile.lock
-          rm ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -102,5 +73,4 @@ jobs:
 
       # Run Brakeman
       - name: Run Brakeman Security Scanner
-        run: |
-          bundle exec brakeman --color -o /dev/stdout
+        run: bundle exec brakeman --color -o /dev/stdout
