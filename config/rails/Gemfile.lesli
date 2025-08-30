@@ -2,7 +2,7 @@
 
 Lesli
 
-Copyright (c) 2023, Lesli Technologies, S. A.
+Copyright (c) 2025, Lesli Technologies, S. A.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ along with this program. If not, see http://www.gnu.org/licenses/.
 
 Lesli · Ruby on Rails SaaS Development Framework.
 
-Made with ♥ by https://www.lesli.tech
+Made with ♥ by LesliTech
 Building a better future, one line of code at a time.
 
 @contact  hello@lesli.tech
@@ -30,17 +30,22 @@ Building a better future, one line of code at a time.
 // · 
 =end
 
+# List of Lesli engines to be installed
+LESLI_ENGINES = [
+    "Lesli", 
+    "LesliBell", 
+    "LesliAdmin", 
+    "LesliBabel", 
+    "LesliAudit", 
+    #"LesliPapers",
+    "LesliShield",
+    "LesliSupport", 
+    "LesliCalendar", 
+    "LesliDashboard",
+    "LesliMailer"
+]
 
-# Search for local engines
-lesli_engines = Dir.glob("engines/**").map { |ngn| ngn.sub("engines/", "") }
-
-
-# Include required engines (if not included localy)
-lesli_engines << "Lesli" unless lesli_engines.include?("Lesli")
-#lesli_engines << "LesliShield" unless lesli_engines.include?("LesliShield")
-
-
-lesli_engines.each do |engine_name|
+LESLI_ENGINES.each do |engine_name|
 
     # get the engine folder name (development only)
     engine_code = engine_name.gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
@@ -50,9 +55,19 @@ lesli_engines.each do |engine_name|
 
         # load engine from source code
         gem "#{engine_code}", path: "engines/#{engine_name}"
-    else
 
-        # install engine from rubygems
-        gem "#{engine_code}"
+        next;
     end
+
+    # if the gem is installed locally 
+    if Dir.exist?("#{File.dirname(__FILE__)}/gems/#{engine_name}")
+
+        # load engine from source code
+        gem "#{engine_code}", path: "gems/#{engine_name}"
+
+        next;
+    end
+
+    # install engine from rubygems
+    gem "#{engine_code}"
 end
