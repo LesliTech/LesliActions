@@ -109,7 +109,7 @@ jobs:
 
       # Run Rspec tests & collect coverage
       - name: Run Rails tests with SQLite
-        run: bundle exec rspec --format documentation --format RspecJunitFormatter --out junit.xml
+        run: bundle exec rails test
         env:
           COVERAGE: true
 

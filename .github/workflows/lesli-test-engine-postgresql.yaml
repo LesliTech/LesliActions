@@ -125,4 +125,4 @@ jobs:
 
       # Run Rspec tests & collect coverage
       - name: Run Rails tests 
-        run: bundle exec rspec --format documentation --format RspecJunitFormatter --out junit.xml
+        run: bundle exec rails test
