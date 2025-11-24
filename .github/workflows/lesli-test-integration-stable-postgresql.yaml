@@ -33,7 +33,6 @@ jobs:
         run: gem install rails
 
       # Step 4: Creates a fresh, new Rails application.
-      # The --skip-bundle flag prevents gem installation until we've added our engine.
       - name: Create new Rails app
         run: rails new rails_app --skip-bundle
 

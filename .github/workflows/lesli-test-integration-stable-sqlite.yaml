@@ -1,0 +1,71 @@
+# A descriptive name for your workflow.
+name: Rails CI with Engine Tests
+
+# This workflow will run on every push to the main branch
+# and for all pull requests.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# Define a single job to run the build and tests.
+jobs:
+  build_and_test:
+    # The runner environment for this job. Ubuntu is a common choice for Rails.
+    runs-on: ubuntu-latest
+
+    # The steps that will be executed in sequence.
+    steps:
+      # Step 1: Checks out your repository's code. This is a standard first step.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Sets up a Ruby environment. We're using a stable version.
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2' # Specify the Ruby version you need.
+          bundler-cache: true # Caches gems to speed up subsequent runs.
+
+      # Step 3: Installs the Rails gem globally.
+      - name: Install Rails gem
+        run: gem install rails
+
+      # Step 4: Creates a fresh, new Rails application.
+      - name: Create new Rails app
+        run: rails new rails_app --skip-bundle
+
+      # Step 5: Navigate into the new Rails application directory.
+      - name: Change working directory to Rails app
+        working-directory: ./rails_app
+        run: ls -la
+
+      # Step 6: Creates the 'engines' directory inside the new Rails app.
+      - name: Create engines directory
+        working-directory: ./rails_app
+        run: mkdir -p engines
+
+      # Step 7: Clones your external repository into the 'engines' directory.
+      # **IMPORTANT:** Replace the URL below with the actual URL of your repository.
+      - name: Clone external engine repository
+        working-directory: ./rails_app/engines
+        run: git clone https://github.com/my-user/my_repository.git
+
+      # Step 8: Adds the cloned repository to the new Rails app's Gemfile.
+      # This tells Rails to treat the cloned repo as a local gem (an engine).
+      # # # - name: Add engine to Gemfile
+      # # #   working-directory: ./rails_app
+      # # #   run: echo "gem 'my_repository', path: 'engines/my_repository'" >> Gemfile
+
+      # # # # Step 9: Install all the gems, including the newly added engine gem.
+      # # # - name: Install dependencies
+      # # #   working-directory: ./rails_app
+      # # #   run: bundle install
+
+      # # # # Step 10: Executes Minitest. This command is a powerful feature of Rails 6+
+      # # # # as it automatically finds and runs all tests within the main app and
+      # # # # any mounted engines, including the one we just cloned.
+      # # # - name: Run Minitest
+      # # #   working-directory: ./rails_app
+      # # #   run: bundle exec rails test
