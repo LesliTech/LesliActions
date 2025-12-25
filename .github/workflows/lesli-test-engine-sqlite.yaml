@@ -57,42 +57,10 @@ jobs:
 
     steps:
 
-      # Clone LesliBuilder repository
-      - name: Checkout LesliBuilder repository
-        uses: actions/checkout@v4
-        with:
-          repository: LesliTech/LesliBuilder
-
-      # Clone LesliActions repository
-      - name: Checkout LesliActions repository
-        uses: actions/checkout@v4
-        with:
-          path: ./enginesdev/LesliActions
-          repository: LesliTech/LesliActions
-
-      # Clone Lesli core repository
-      - name: Checkout Lesli repository
-        uses: actions/checkout@v4
-        if: github.event.repository.name != 'Lesli'
-        with:
-          path: ./engines/Lesli
-          repository: LesliTech/Lesli
-
       # Clone engine repository
       - name: Checkout engine repository
         uses: actions/checkout@v4
-        if: github.event.repository.name != 'LesliActions'
-        with:
-          path: ./engines/${{ github.event.repository.name }}
-          repository: LesliTech/${{ github.event.repository.name }}
 
-      # Prepare configuration files
-      - name: Copy configuration files
-        run: |
-          rm ./Gemfile.lock
-          rm ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/database_sqlite.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -101,11 +69,6 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-      # Build the Lesli database
-      - name: Set up SQLite database
-        run: RAILS_ENV=test bundle exec rake lesli:db:reset
-        env:
-          RAILS_ENV: test
 
       # Run Rspec tests & collect coverage
       - name: Run Rails tests with SQLite
