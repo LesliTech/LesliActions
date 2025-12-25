@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Brakeman Test Workflow"
+name: "Lesli Test Engine Brakeman Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -49,7 +49,7 @@ on:
 
 jobs:
   brakeman-scan:
-    name: "Engine brakeman workflow"
+    name: "Test Engine Brakeman Workflow"
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
@@ -60,9 +60,6 @@ jobs:
       # Clone engine repository
       - name: Checkout engine repository
         uses: actions/checkout@v4
-        if: github.event.repository.name != 'LesliActions'
-        with:
-          repository: LesliTech/${{ github.event.repository.name }}
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems

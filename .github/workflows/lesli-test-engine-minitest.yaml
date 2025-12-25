@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli SQLite Test Workflow"
+name: "Lesli Test Engine Minitest Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -49,7 +49,7 @@ on:
 
 jobs:
   sqlite-test:
-    name: SQLite test workflow
+    name: Test Engine Minitest Workflow
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
@@ -60,7 +60,6 @@ jobs:
       # Clone engine repository
       - name: Checkout engine repository
         uses: actions/checkout@v4
-
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -73,8 +72,6 @@ jobs:
       # Run Rspec tests & collect coverage
       - name: Run Rails tests with SQLite
         run: bundle exec rails test
-        env:
-          COVERAGE: true
 
       - name: Upload test coverage to Codecov
         uses: codecov/codecov-action@v5
