@@ -90,6 +90,7 @@ jobs:
 
       # Install Lesli gem
       - name: Install Lesli
+        working-directory: LesliApp
         run: |
           bundle add lesli
           rails generate lesli:install
@@ -98,30 +99,32 @@ jobs:
       - name: Checkout LesliActions repository
         uses: actions/checkout@v4
         with:
-          path: ./enginesdev/LesliActions
+          path: ./LesliApp/enginesdev/LesliActions
           repository: LesliTech/LesliActions
 
       # Clone engine repository
       - name: Checkout engine repository
         uses: actions/checkout@v4
         with:
-          path: ./engines/${{ github.event.repository.name }}
+          path: ./LesliApp/engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
 
       # Prepare configuration files
       - name: Copy configuration files
         run: |
-          rm ./Gemfile.lock
-          rm ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
+          rm ./LesliApp/Gemfile.lock
+          rm ./LesliApp/Gemfile.lesli
+          cp ./LesliApp/enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
+          cp ./LesliApp/enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
 
       # Build the Lesli database
       - name: Set up database
+        working-directory: LesliApp
         run: RAILS_ENV=test bundle exec rake lesli:db:reset
         env:
           RAILS_ENV: test
 
       # Run Rspec tests 
       - name: Run Rails tests 
+        working-directory: LesliApp
         run: LESLI_INTEGRATION_TEST=true bin/rails test
