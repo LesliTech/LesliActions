@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Integration Test Builder Workflow"
+name: "Lesli Test Integration Builder PostgreSQL Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -49,11 +49,27 @@ on:
 
 jobs:
   integration-builder-sqlite-test:
-    name: Integration test builder workflow
+    name: Test Integration Builder PostgreSQL Workflow
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
     if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
+
+    # Start database service necessary to execute the RSpec tests
+    services:
+      postgres:
+        image: postgres:11.5
+        env:
+          POSTGRES_DB: "lesli-test"
+          POSTGRES_USER: "lesli-test"
+          POSTGRES_PASSWORD: "lesli-test"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
 
@@ -102,93 +118,12 @@ jobs:
           bundler-cache: true
 
       # Build the Lesli database
-      - name: Set up SQLite database
+      - name: Set up database
         run: RAILS_ENV=test bundle exec rake lesli:db:reset
         env:
           RAILS_ENV: test
 
-      # Run Rspec tests & collect coverage
-      - name: Run Rails tests with SQLite
-        run: bin/rails test
-        env:
-          RAILS_ENV: test
-          LESLI_INTEGRATION_TEST: true
-  postgres-test:
-    name: Test workflow for Lesli Core (PostgreSQL)
-    runs-on: ubuntu-latest
-
-    # Do not execute the test if requests comes from another action
-    if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
-
-    # Start database service necessary to execute the RSpec tests
-    services:
-      postgres:
-        image: postgres:11.5
-        env:
-          POSTGRES_DB: "lesli-test"
-          POSTGRES_USER: "lesli-test"
-          POSTGRES_PASSWORD: "lesli-test"
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-
-      # Clone LesliBuilder repository
-      - name: Checkout LesliBuilder repository
-        uses: actions/checkout@v4
-        with:
-          repository: LesliTech/LesliBuilder
-
-      # Clone core repository
-      - name: Checkout LesliActions code
-        uses: actions/checkout@v4
-        with:
-          path: ./enginesdev/LesliActions
-          repository: LesliTech/LesliActions
-
-      # Clone core repository
-      - name: Checkout Lesli code
-        uses: actions/checkout@v4
-        if: github.event.repository.name != 'Lesli'
-        with:
-          path: ./engines/Lesli
-          repository: LesliTech/Lesli
-
-      # Clone engine repository
-      - name: Checkout engine code
-        uses: actions/checkout@v4
-        if: github.event.repository.name != 'LesliActions'
-        with:
-          path: ./engines/${{ github.event.repository.name }}
-          repository: LesliTech/${{ github.event.repository.name }}
-
-      # Prepare configuration files
-      - name: Copy configuration files
-        run: |
-          rm ./Gemfile.lock
-          rm ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
-
-      # Use the official receipt to install ruby in ubuntu
-      - name: Install Ruby and gems
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.2.5
-          bundler-cache: true
-
-      # Build the Lesli database
-      - name: Set up PostgreSQL database 
-        run: RAILS_ENV=test bundle exec rake lesli:db:reset
-        env:
-          RAILS_ENV: test
-
-      # Run Rspec tests & collect coverage
+      # Run Rspec tests 
       - name: Run Rails tests 
         run: bin/rails test
         env:

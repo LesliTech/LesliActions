@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli tests workflow"
+name: "Lesli Tests Workflow"
 on:
   push:
     branches: [master]  # Execute when push only for the master branch
