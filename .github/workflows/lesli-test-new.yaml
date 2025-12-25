@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Test Stable Workflow"
+name: "Lesli Test New Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -48,8 +48,8 @@ on:
         type: string
 
 jobs:
-  stable-test:
-    name: Test Stable Workflow
+  new-test:
+    name: Test New Workflow
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
@@ -88,12 +88,13 @@ jobs:
       - name: Create the rails app
         run: rails new LesliApp
 
-      # Install Lesli gem
-      - name: Install Lesli
-        working-directory: LesliApp
-        run: |
-          bundle add lesli
-          rails generate lesli:install
+      # Clone Lesli core repository
+      - name: Checkout Lesli repository
+        uses: actions/checkout@v4
+        if: github.event.repository.name != 'Lesli'
+        with:
+          path: ./LesliApp/engines/Lesli
+          repository: LesliTech/Lesli
 
       # Clone LesliActions repository
       - name: Checkout LesliActions repository
