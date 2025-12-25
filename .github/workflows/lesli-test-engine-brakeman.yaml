@@ -68,6 +68,10 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-      # Run Brakeman
+      # Run Brakeman report
       - name: Run Brakeman Security Scanner
         run: bundle exec brakeman --color -o /dev/stdout
+
+      # Upload Brakeman report
+      - name: Upload Brakeman Security Scanner
+        run: bundle exec brakeman -f sonar -o ./brakeman/brakeman-sonar.json --no-exit-on-warn
