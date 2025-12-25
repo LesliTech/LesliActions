@@ -125,7 +125,7 @@ jobs:
 
       # Run Rspec tests 
       - name: Run Rails tests 
-        run: bin/rails test
+        run: LESLI_INTEGRATION_TEST=true bin/rails test
         env:
           RAILS_ENV: test
           LESLI_INTEGRATION_TEST: true
