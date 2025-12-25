@@ -108,7 +108,7 @@ jobs:
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
           cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/database_sqlite.yml ./config/database.yml
+          cp ./enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
@@ -126,6 +126,3 @@ jobs:
       # Run Rspec tests 
       - name: Run Rails tests 
         run: LESLI_INTEGRATION_TEST=true bin/rails test
-        env:
-          RAILS_ENV: test
-          LESLI_INTEGRATION_TEST: true
