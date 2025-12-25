@@ -68,11 +68,11 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-
       # Run Rspec tests & collect coverage
       - name: Run Rails tests with SQLite
         run: bundle exec rails test
 
+      # Upload test coverage to CodeCov platform
       - name: Upload test coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -80,6 +80,7 @@ jobs:
           files: ./coverage/coverage.xml
           report_type: coverage
 
+      # Upload test results to CodeCov platform
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
