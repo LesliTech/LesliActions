@@ -59,18 +59,10 @@ jobs:
     with:
       branch: ${{ github.ref_name }}
 
-  lesli-test-builder-postgresql:
-    name: Run lesli-test-builder-postgresql
+  lesli-test-builder:
+    name: Run lesli-test-builder
     needs: lesli-test-engine-minitest
-    uses: LesliTech/LesliActions/.github/workflows/lesli-test-builder-postgresql.yaml@master
-    with:
-      branch: ${{ github.ref_name }}
-
-  lesli-test-integration-builder-sqlite:
-    name: Run lesli-test-engine-sqlite
-    if: github.event.repository.name == 'Lesli'
-    needs: lesli-test-engine-postgresql
-    uses: LesliTech/LesliActions/.github/workflows/lesli-test-engine-sqlite.yaml@master
+    uses: LesliTech/LesliActions/.github/workflows/lesli-test-builder.yaml@master
     with:
       branch: ${{ github.ref_name }}
 

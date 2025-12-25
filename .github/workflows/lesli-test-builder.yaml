@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Test Builder PostgreSQL Workflow"
+name: "Lesli Test Builder Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -48,28 +48,12 @@ on:
         type: string
 
 jobs:
-  builder-postgresql-test:
-    name: Test Builder PostgreSQL Workflow
+  builder-test:
+    name: Test Builder Workflow
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
     if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
-
-    # Start database service necessary to execute the RSpec tests
-    services:
-      postgres:
-        image: postgres:11.5
-        env:
-          POSTGRES_DB: "lesli-test"
-          POSTGRES_USER: "lesli-test"
-          POSTGRES_PASSWORD: "lesli-test"
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
 
@@ -97,7 +81,6 @@ jobs:
       # Clone engine repository
       - name: Checkout engine repository
         uses: actions/checkout@v4
-        if: github.event.repository.name != 'LesliActions'
         with:
           path: ./engines/${{ github.event.repository.name }}
           repository: LesliTech/${{ github.event.repository.name }}
@@ -108,7 +91,7 @@ jobs:
           rm ./Gemfile.lock
           rm ./Gemfile.lesli
           cp ./enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
-          cp ./enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
+          cp ./enginesdev/LesliActions/config/rails/database_sqlite.yml ./config/database.yml
 
       # Use the official receipt to install ruby in ubuntu
       - name: Install Ruby and gems
