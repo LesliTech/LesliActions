@@ -38,7 +38,7 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Test Integration Builder PostgreSQL Workflow"
+name: "Lesli Test Builder PostgreSQL Workflow"
 on:
   workflow_dispatch:    # This allows the action to be executed on demand
   workflow_call:        # This allows the workflow to be reusable
@@ -48,8 +48,8 @@ on:
         type: string
 
 jobs:
-  integration-builder-sqlite-test:
-    name: Test Integration Builder PostgreSQL Workflow
+  builder-postgresql-test:
+    name: Test Builder PostgreSQL Workflow
     runs-on: ubuntu-latest
 
     # Do not execute the test if requests comes from another action
