@@ -113,10 +113,14 @@ jobs:
       # Prepare configuration files
       - name: Copy configuration files
         run: |
-          rm ./LesliApp/Gemfile.lock
-          rm ./LesliApp/Gemfile.lesli
           cp ./LesliApp/enginesdev/LesliActions/config/rails/Gemfile.lesli ./Gemfile.lesli
           cp ./LesliApp/enginesdev/LesliActions/config/rails/database_postgresql.yml ./config/database.yml
+          echo 'eval_gemfile "Gemfile.lesli" if File.exist?("Gemfile.lesli")' >> Gemfile
+
+      # Update gems one last time
+      - name: Update gems
+        working-directory: LesliApp
+        run: bundle update
 
       # Build the Lesli database
       - name: Set up database
