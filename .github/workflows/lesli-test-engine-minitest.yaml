@@ -73,10 +73,15 @@ jobs:
         run: bundle exec rails test
 
       # Collect coverage
-      - name: Run Rails tests with SQLite
+      - name: Run Rails tests to collect coverage
         run: bundle exec rails test
         env:
           COVERAGE: true
+
+      - name: Show generated coverage
+        run: |
+          ls -la coverage
+          sed -n '1,60p' coverage/coverage.xml
 
       # Upload test coverage to CodeCov platform
       - name: Upload test coverage to Codecov
@@ -88,7 +93,6 @@ jobs:
 
       # Upload test results to CodeCov platform
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
