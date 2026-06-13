@@ -68,10 +68,6 @@ jobs:
           ruby-version: 3.2.5
           bundler-cache: true
 
-      # Run tests 
-      - name: Run Rails tests with SQLite
-        run: bundle exec rails test
-
       # Collect coverage
       - name: Run Rails tests to collect coverage
         run: bundle exec rails test

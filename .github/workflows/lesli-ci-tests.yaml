@@ -1,6 +1,6 @@
 # Lesli
 # 
-# Copyright (c) 2025, Lesli Technologies, S. A.
+# Copyright (c) 2026, Lesli Technologies, S. A.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@ jobs:
     uses: LesliTech/LesliActions/.github/workflows/lesli-test-engine-brakeman.yaml@master
     with:
       branch: ${{ github.ref_name }}
+
   lesli-test-engine-minitest:
     name: Run lesli-test-engine-minitest
     needs: lesli-test-engine-brakeman
