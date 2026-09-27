@@ -1,0 +1,105 @@
+# Lesli
+# 
+# Copyright (c) 2026, Lesli Technologies, S. A.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+# 
+# Lesli · Ruby on Rails SaaS Development Framework.
+# 
+# Made with ♥ by LesliTech
+# Building a better future, one line of code at a time.
+# 
+# @contact  hello@lesli.tech
+# @website  https://www.lesli.tech
+# @license  GPLv3 http://www.gnu.org/licenses/gpl-3.0.en.html
+# 
+# // · ~·~     ~·~     ~·~     ~·~     ~·~     ~·~     ~·~     ~·~     ~·~
+# // · 
+
+
+
+# -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
+# REUSABLE GITHUB ACTIONS WORKFLOWS DESIGNED TO BE USED ACROSS 
+# THE LESLI FRAMEWORK REPOSITORIES
+# -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
+
+
+
+# Minitest suite for standalone Ruby gems
+# -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
+name: "Lesli Test Gem Minitest Workflow"
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        description: Ruby version used to run the gem test suite
+        required: false
+        type: string
+        default: "3.2.5"
+    secrets:
+      CODECOV_TOKEN:
+        description: Optional Codecov upload token
+        required: false
+
+jobs:
+  gem-test:
+    name: Test Ruby gem with Minitest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+
+      # In a reusable workflow this checks out the calling gem repository.
+      - name: Checkout gem repository
+        uses: actions/checkout@v4
+
+      # Install Ruby and cache the bundle using the calling gem's lockfile.
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: true
+
+      # LesliTesting starts SimpleCov when COVERAGE is present.
+      - name: Run gem tests with coverage
+        run: bundle exec rake
+        env:
+          COVERAGE: "true"
+
+      - name: Verify generated coverage
+        if: ${{ always() }}
+        run: |
+          test -f coverage/coverage.xml
+          ls -la coverage
+          sed -n '1,60p' coverage/coverage.xml
+
+      # Preserve the generated reports even when the test or coverage threshold fails.
+      - name: Upload coverage artifact
+        if: ${{ always() && hashFiles('coverage/coverage.xml') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ruby-${{ inputs.ruby-version }}
+          path: coverage/
+          if-no-files-found: error
+
+      - name: Upload coverage to Codecov
+        if: ${{ always() && hashFiles('coverage/coverage.xml') != '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage.xml
+          flags: minitest
+          name: ruby-${{ inputs.ruby-version }}
+          report_type: coverage
