@@ -46,7 +46,7 @@ on:
         description: Ruby version used to run the gem test suite
         required: false
         type: string
-        default: "3.2.5"
+        default: "3.3.5"
     secrets:
       CODECOV_TOKEN:
         description: Optional Codecov upload token
