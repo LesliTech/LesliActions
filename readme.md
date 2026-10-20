@@ -171,8 +171,17 @@ introduced. Once they are verified across the Lesli repositories, publish a
 
 ## Documentation
 
+- [Documentation index](docs/index.md)
+- [Rails applications](docs/rails-apps.md)
+- [Rails engines and Rails gems](docs/rails-engines.md)
+- [Standalone Ruby gems](docs/ruby-gems.md)
+- [Integration tests](docs/integration-tests.md)
+- [Security scans](docs/security.md)
+- [Migration from historical workflows](docs/migration.md)
+
+Project links:
+
 - [Lesli website](https://www.lesli.dev/)
-- [Lesli documentation](https://www.lesli.dev/)
 - [Source code](https://github.com/LesliTech/LesliActions)
 
 ## License
