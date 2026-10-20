@@ -112,7 +112,7 @@ jobs:
       - name: "Prepare host test database"
         env:
           RAILS_ENV: test
-        run: bundle exec rake lesli:db:reset
+        run: bundle exec rake lesli:db:rebuild
 
       # Run the complete host suite with the caller module loaded from source.
       - name: "Run host integration tests"

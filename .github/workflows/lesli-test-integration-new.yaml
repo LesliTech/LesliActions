@@ -134,7 +134,7 @@ jobs:
         working-directory: LesliApp
         env:
           RAILS_ENV: test
-        run: bundle exec rake lesli:db:reset
+        run: bundle exec rake lesli:db:rebuild
 
       # Eager loading catches missing constants and undeclared dependencies early.
       - name: "Verify application eager loading"

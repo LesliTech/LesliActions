@@ -1,0 +1,3 @@
+<%= navigation_for_files([
+    "integration-tests",
+]) %>
