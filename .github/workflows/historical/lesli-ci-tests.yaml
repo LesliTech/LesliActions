@@ -1,6 +1,6 @@
 # Lesli
 # 
-# Copyright (c) 2025, Lesli Technologies, S. A.
+# Copyright (c) 2026, Lesli Technologies, S. A.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,40 +38,38 @@
 
 # Specs for The Lesli Framework
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Test Engine Brakeman Workflow"
+name: "Historical Lesli Tests Workflow"
 on:
+  push:
+    branches: [master]  # Execute when push only for the master branch
   workflow_dispatch:    # This allows the action to be executed on demand
-  workflow_call:        # This allows the workflow to be reusable
-    inputs:
-      branch:
-        required: true
-        type: string
+  workflow_call:        # This makes it reusable across all the lesli repos
+  pull_request:         # Execute this workflow automatic on any new PR
 
 jobs:
-  brakeman-scan:
-    name: "Test Engine Brakeman Workflow"
-    runs-on: ubuntu-latest
+  lesli-test-engine-brakeman:
+    name: Run lesli-test-engine-brakeman
+    uses: LesliTech/LesliActions/.github/workflows/lesli-test-engine-brakeman.yaml@master
+    with:
+      branch: ${{ github.ref_name }}
 
-    # Do not execute the test if requests comes from another action
-    if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
+  lesli-test-engine-minitest:
+    name: Run lesli-test-engine-minitest
+    needs: lesli-test-engine-brakeman
+    uses: LesliTech/LesliActions/.github/workflows/lesli-test-engine-minitest.yaml@master
+    with:
+      branch: ${{ github.ref_name }}
 
-    steps:
+  lesli-test-builder:
+    name: Run lesli-test-builder
+    needs: lesli-test-engine-minitest
+    uses: LesliTech/LesliActions/.github/workflows/lesli-test-builder.yaml@master
+    with:
+      branch: ${{ github.ref_name }}
 
-      # Clone engine repository
-      - name: Checkout engine repository
-        uses: actions/checkout@v4
-
-      # Use the official receipt to install ruby in ubuntu
-      - name: Install Ruby and gems
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.3.5
-          bundler-cache: true
-
-      # Run Brakeman report
-      - name: Run Brakeman Security Scanner
-        run: bundle exec brakeman --color -o /dev/stdout
-
-      # Upload Brakeman report
-      - name: Upload Brakeman Security Scanner
-        run: bundle exec brakeman -f sonar -o ./brakeman/brakeman-sonar.json --no-exit-on-warn
+  lesli-test-new:
+    name: Run lesli-test-new
+    needs: lesli-test-builder
+    uses: LesliTech/LesliActions/.github/workflows/lesli-test-new.yaml@master
+    with:
+      branch: ${{ github.ref_name }}

@@ -1,0 +1,107 @@
+# Lesli
+#
+# Copyright (c) 2026, Lesli Technologies, S. A.
+# Licensed under GPL-3.0-or-later.
+#
+# Continuous integration for a Rails application that hosts Lesli modules.
+
+name: "Lesli CI App"
+
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        description: "Ruby version used to run the application test suite"
+        required: false
+        type: string
+        default: "3.3.5"
+      run-security:
+        description: "Run Rails security checks before starting application tests"
+        required: false
+        type: boolean
+        default: true
+      run-system-tests:
+        description: "Run the Rails system test suite after regular tests pass"
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      CODECOV_TOKEN:
+        description: "Optional token used to upload coverage to Codecov"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    name: "Application security"
+    if: ${{ inputs.run-security }}
+    uses: ./.github/workflows/lesli-test-security.yaml
+    with:
+      ruby-version: ${{ inputs.ruby-version }}
+      rails-path: "."
+
+  tests:
+    name: "Application tests"
+    needs: security
+    if: ${{ always() && !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      RAILS_ENV: test
+
+    steps:
+      # Checkout the repository and exact commit that called this workflow.
+      - name: "Checkout application repository"
+        uses: actions/checkout@v4
+
+      # Install the selected Ruby version and all dependencies from the lockfile.
+      - name: "Install Ruby and gems"
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: true
+
+      # Prepare the test database before starting the application suite.
+      - name: "Prepare application test database"
+        run: bin/rails db:test:prepare
+
+      # Run regular Rails tests and ask LesliTesting to collect coverage.
+      - name: "Run application tests with coverage"
+        env:
+          COVERAGE: "true"
+        run: bin/rails test
+
+      # Run browser-backed tests only when the caller explicitly enables them.
+      - name: "Run application system tests"
+        if: ${{ inputs.run-system-tests }}
+        env:
+          COVERAGE: "true"
+        run: bin/rails test:system
+
+      # Fail clearly when the expected Cobertura report was not generated.
+      - name: "Verify coverage report"
+        run: test -f coverage/coverage.xml
+
+      # Preserve coverage for inspection and downstream analysis.
+      - name: "Upload coverage artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.event.repository.name }}-${{ inputs.ruby-version }}
+          path: coverage/
+          if-no-files-found: error
+
+      # Upload coverage only when the caller provides its Codecov token.
+      - name: "Upload coverage to Codecov"
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ env.CODECOV_TOKEN }}
+          files: ./coverage/coverage.xml
+          flags: rails-app
+          name: ruby-${{ inputs.ruby-version }}
+          report_type: coverage
+          fail_ci_if_error: true
+

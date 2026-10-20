@@ -1,0 +1,123 @@
+# Lesli
+#
+# Copyright (c) 2026, Lesli Technologies, S. A.
+# Licensed under GPL-3.0-or-later.
+#
+# Test a Lesli engine or Rails gem inside the real LesliBuilder host application.
+
+name: "Lesli Test Integration"
+
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        description: "Ruby version used to run the host application"
+        required: false
+        type: string
+        default: "3.3.5"
+      module-directory:
+        description: "Host directory for the module: engines or gems"
+        required: false
+        type: string
+        default: "engines"
+      builder-ref:
+        description: "LesliBuilder branch, tag, or commit used as the host"
+        required: false
+        type: string
+        default: "master"
+      lesli-ref:
+        description: "Lesli branch, tag, or commit used by the host"
+        required: false
+        type: string
+        default: "master"
+      actions-ref:
+        description: "LesliActions branch, tag, or commit containing host configuration"
+        required: false
+        type: string
+        default: "master"
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: "Test module inside LesliBuilder"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # Reject unsupported paths before starting repository checkouts.
+      - name: "Validate module directory"
+        env:
+          MODULE_DIRECTORY: ${{ inputs.module-directory }}
+        run: |
+          case "$MODULE_DIRECTORY" in
+            engines|gems) ;;
+            *) echo "module-directory must be either 'engines' or 'gems'"; exit 1 ;;
+          esac
+
+      # Checkout the stable host application at the workspace root.
+      - name: "Checkout LesliBuilder host application"
+        uses: actions/checkout@v4
+        with:
+          repository: LesliTech/LesliBuilder
+          ref: ${{ inputs.builder-ref }}
+
+      # Checkout the exact caller commit instead of the module's default branch.
+      - name: "Checkout module under test"
+        uses: actions/checkout@v4
+        with:
+          path: ${{ inputs.module-directory }}/${{ github.event.repository.name }}
+
+      # Provide Lesli core when another module is the repository under test.
+      - name: "Checkout Lesli core"
+        if: ${{ github.event.repository.name != 'Lesli' }}
+        uses: actions/checkout@v4
+        with:
+          repository: LesliTech/Lesli
+          ref: ${{ inputs.lesli-ref }}
+          path: engines/Lesli
+
+      # Checkout the shared host configuration used by the integration suite.
+      - name: "Checkout LesliActions configuration"
+        uses: actions/checkout@v4
+        with:
+          repository: LesliTech/LesliActions
+          ref: ${{ inputs.actions-ref }}
+          path: enginesdev/LesliActions
+
+      # Configure the host to load the local module and use its test database.
+      - name: "Configure host application"
+        env:
+          MODULE_DIRECTORY: ${{ inputs.module-directory }}
+          MODULE_REPOSITORY: ${{ github.event.repository.name }}
+        run: |
+          rm -f Gemfile.lock
+          cp enginesdev/LesliActions/config/rails/Gemfile.lesli Gemfile.lesli
+          cp enginesdev/LesliActions/config/rails/database_sqlite.yml config/database.yml
+
+          if ! grep -Fq "\"$MODULE_REPOSITORY\"" Gemfile.lesli; then
+            MODULE_GEM_NAME="$(ruby -e 'puts ARGV.fetch(0).gsub(/([a-z\d])([A-Z])/, "\\1_\\2").downcase' "$MODULE_REPOSITORY")"
+            printf '\ngem "%s", path: "%s/%s"\n' "$MODULE_GEM_NAME" "$MODULE_DIRECTORY" "$MODULE_REPOSITORY" >> Gemfile.lesli
+          fi
+
+      # Install dependencies after every local module has been configured.
+      - name: "Install Ruby and host dependencies"
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: true
+
+      # Rebuild the database so integration tests start from a known state.
+      - name: "Prepare host test database"
+        env:
+          RAILS_ENV: test
+        run: bundle exec rake lesli:db:reset
+
+      # Run the complete host suite with the caller module loaded from source.
+      - name: "Run host integration tests"
+        env:
+          LESLI_INTEGRATION_TEST: "true"
+          RAILS_ENV: test
+        run: bin/rails test
+

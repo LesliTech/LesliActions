@@ -1,0 +1,153 @@
+# Lesli
+#
+# Copyright (c) 2026, Lesli Technologies, S. A.
+# Licensed under GPL-3.0-or-later.
+#
+# Install a Lesli engine or Rails gem inside a newly generated Rails application.
+
+name: "Lesli Test Integration New"
+
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        description: "Ruby version used to generate and test the application"
+        required: false
+        type: string
+        default: "3.3.5"
+      rails-version:
+        description: "Rails version used to generate the application"
+        required: false
+        type: string
+        default: "8.1.4"
+      module-directory:
+        description: "Application directory for the module: engines or gems"
+        required: false
+        type: string
+        default: "engines"
+      lesli-ref:
+        description: "Lesli branch, tag, or commit installed in the new application"
+        required: false
+        type: string
+        default: "master"
+      actions-ref:
+        description: "LesliActions branch, tag, or commit containing host configuration"
+        required: false
+        type: string
+        default: "master"
+
+permissions:
+  contents: read
+
+jobs:
+  integration-new:
+    name: "Test module inside a new Rails application"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: "lesli-test"
+          POSTGRES_USER: "lesli-test"
+          POSTGRES_PASSWORD: "lesli-test"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      # Reject unsupported paths before generating the application.
+      - name: "Validate module directory"
+        env:
+          MODULE_DIRECTORY: ${{ inputs.module-directory }}
+        run: |
+          case "$MODULE_DIRECTORY" in
+            engines|gems) ;;
+            *) echo "module-directory must be either 'engines' or 'gems'"; exit 1 ;;
+          esac
+
+      # Install Ruby without bundling because the Rails application does not exist yet.
+      - name: "Install Ruby"
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+
+      # Pin Rails so the generated application is reproducible.
+      - name: "Install Rails"
+        run: gem install rails --version "${{ inputs.rails-version }}" --no-document
+
+      # Generate a clean host and defer dependency installation until modules are present.
+      - name: "Generate Rails application"
+        run: rails _${{ inputs.rails-version }}_ new LesliApp --database=postgresql --skip-git --skip-bundle
+
+      # Checkout the exact caller commit into the generated application.
+      - name: "Checkout module under test"
+        uses: actions/checkout@v4
+        with:
+          path: LesliApp/${{ inputs.module-directory }}/${{ github.event.repository.name }}
+
+      # Provide Lesli core when another module is the repository under test.
+      - name: "Checkout Lesli core"
+        if: ${{ github.event.repository.name != 'Lesli' }}
+        uses: actions/checkout@v4
+        with:
+          repository: LesliTech/Lesli
+          ref: ${{ inputs.lesli-ref }}
+          path: LesliApp/engines/Lesli
+
+      # Checkout the configuration used to assemble a Lesli host application.
+      - name: "Checkout LesliActions configuration"
+        uses: actions/checkout@v4
+        with:
+          repository: LesliTech/LesliActions
+          ref: ${{ inputs.actions-ref }}
+          path: LesliApp/enginesdev/LesliActions
+
+      # Configure the new application to load Lesli modules from local paths.
+      - name: "Configure generated application"
+        working-directory: LesliApp
+        env:
+          MODULE_DIRECTORY: ${{ inputs.module-directory }}
+          MODULE_REPOSITORY: ${{ github.event.repository.name }}
+        run: |
+          cp enginesdev/LesliActions/config/rails/Gemfile.lesli Gemfile.lesli
+          cp enginesdev/LesliActions/config/rails/database_postgresql.yml config/database.yml
+          printf '\neval_gemfile "Gemfile.lesli"\n' >> Gemfile
+
+          if ! grep -Fq "\"$MODULE_REPOSITORY\"" Gemfile.lesli; then
+            MODULE_GEM_NAME="$(ruby -e 'puts ARGV.fetch(0).gsub(/([a-z\d])([A-Z])/, "\\1_\\2").downcase' "$MODULE_REPOSITORY")"
+            printf '\ngem "%s", path: "%s/%s"\n' "$MODULE_GEM_NAME" "$MODULE_DIRECTORY" "$MODULE_REPOSITORY" >> Gemfile.lesli
+          fi
+
+      # Install dependencies only once, after every local module is configured.
+      - name: "Install application dependencies"
+        working-directory: LesliApp
+        run: bundle install
+
+      # Rebuild the PostgreSQL database so the smoke test starts cleanly.
+      - name: "Prepare application test database"
+        working-directory: LesliApp
+        env:
+          RAILS_ENV: test
+        run: bundle exec rake lesli:db:reset
+
+      # Eager loading catches missing constants and undeclared dependencies early.
+      - name: "Verify application eager loading"
+        working-directory: LesliApp
+        env:
+          RAILS_ENV: test
+        run: bin/rails runner "Rails.application.eager_load!"
+
+      # Run the generated host suite with the caller module loaded from source.
+      - name: "Run generated application tests"
+        working-directory: LesliApp
+        env:
+          LESLI_INTEGRATION_TEST: "true"
+          RAILS_ENV: test
+        run: bin/rails test
+

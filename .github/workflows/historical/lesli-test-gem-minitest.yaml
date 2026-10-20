@@ -1,6 +1,6 @@
 # Lesli
 # 
-# Copyright (c) 2025, Lesli Technologies, S. A.
+# Copyright (c) 2026, Lesli Technologies, S. A.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,61 +36,70 @@
 
 
 
-# Specs for The Lesli Framework
+# Minitest suite for standalone Ruby gems
 # -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-   -·-
-name: "Lesli Test Engine Minitest Workflow"
+name: "Historical Lesli Test Gem Minitest Workflow"
 on:
-  workflow_dispatch:    # This allows the action to be executed on demand
-  workflow_call:        # This allows the workflow to be reusable
+  workflow_call:
     inputs:
-      branch:
-        required: true
+      ruby-version:
+        description: Ruby version used to run the gem test suite
+        required: false
         type: string
+        default: "3.3.5"
+    secrets:
+      CODECOV_TOKEN:
+        description: Optional Codecov upload token
+        required: false
 
 jobs:
-  sqlite-test:
-    name: Test Engine Minitest Workflow
+  gem-test:
+    name: Test Ruby gem with Minitest
     runs-on: ubuntu-latest
-
-    # Do not execute the test if requests comes from another action
-    if: ${{ !contains(github.event.head_commit.message, 'ci(workflows):') && !contains(github.event.head_commit.message, 'release(gem):') && !contains(github.event.head_commit.message, 'assets(js):') }}
+    permissions:
+      contents: read
 
     steps:
 
-      # Clone engine repository
-      - name: Checkout engine repository
+      # In a reusable workflow this checks out the calling gem repository.
+      - name: Checkout gem repository
         uses: actions/checkout@v4
 
-      # Use the official receipt to install ruby in ubuntu
+      # Install Ruby and cache the bundle using the calling gem's lockfile.
       - name: Install Ruby and gems
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.3.5
+          ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
 
-      # Collect coverage
-      - name: Run Rails tests to collect coverage
-        run: bundle exec rails test
+      # LesliTesting starts SimpleCov when COVERAGE is present.
+      - name: Run gem tests with coverage
+        run: bundle exec rake
         env:
-          COVERAGE: true
+          COVERAGE: "true"
 
-      - name: Show generated coverage
+      - name: Verify generated coverage
+        if: ${{ always() }}
         run: |
+          test -f coverage/coverage.xml
           ls -la coverage
           sed -n '1,60p' coverage/coverage.xml
 
-      # Upload test coverage to CodeCov platform
-      - name: Upload test coverage to Codecov
+      # Preserve the generated reports even when the test or coverage threshold fails.
+      - name: Upload coverage artifact
+        if: ${{ always() && hashFiles('coverage/coverage.xml') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ruby-${{ inputs.ruby-version }}
+          path: coverage/
+          if-no-files-found: error
+
+      - name: Upload coverage to Codecov
+        if: ${{ always() && hashFiles('coverage/coverage.xml') != '' }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage.xml
+          flags: minitest
+          name: ruby-${{ inputs.ruby-version }}
           report_type: coverage
-
-      # Upload test results to CodeCov platform
-      - name: Upload test results to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/reports/*.xml
-          report_type: test_results
