@@ -74,11 +74,10 @@ jobs:
           COVERAGE: "true"
         run: bin/rails test
 
-      # Run browser-backed tests only when the caller explicitly enables them.
+      # Run system tests without replacing the coverage produced by the regular
+      # suite. Individual applications can still select a browser-backed driver.
       - name: "Run application system tests"
         if: ${{ inputs.run-system-tests }}
-        env:
-          COVERAGE: "true"
         run: bin/rails test:system
 
       # Fail clearly when the expected Cobertura report was not generated.
